@@ -20,7 +20,7 @@ from src.utils.jwt_handler import create_access_token
 def authenticate_user_via_email(
 	user: Union[User, None],
 	passwd: str,
-):
+) -> User:
 	if user is None:
 		verify_password(DUMMY_HASH, passwd) # timing attacks
 		raise AuthenticationException(
@@ -31,6 +31,8 @@ def authenticate_user_via_email(
 		raise AuthenticationException(
 			message="Invalid email or password."
 		)
+	
+	return user
 
 
 def resolve_ip_location(ip_addr: str) -> Union[str, None]:
@@ -47,6 +49,10 @@ def resolve_ip_location(ip_addr: str) -> Union[str, None]:
 		return None
 
 
+def hash_token(token: str) -> str:
+	return hashlib.sha256(token.encode()).hexdigest()
+
+
 def create_tokens(
 	user: User,
 	user_agent: Union[str, None],
@@ -55,7 +61,6 @@ def create_tokens(
 ) -> tuple[str, str, RefreshToken]:
 	access_token = create_access_token(user.uid)
 	raw_refresh_token = secrets.token_urlsafe(32)
-	hashed_refresh_token = hashlib.sha256(raw_refresh_token.encode()).hexdigest()
 	
 	location = None
 	if ip_addr:
@@ -64,7 +69,7 @@ def create_tokens(
 	refresh_token = RefreshToken(
 		user_id=user.uid,
 		family_id=family_id if family_id is not None else uuid4(),
-		token_hash=hashed_refresh_token,
+		token_hash=hash_token(raw_refresh_token),
 		expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
 		device_info=user_agent,
 		ip_address=ip_addr,

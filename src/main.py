@@ -4,6 +4,7 @@ from src.database.connect import engine
 from src.errors.handler import register_exception_handlers
 from src.models.base import Base
 from src.routes.auth import router as auth_router
+from src.routes.session import router as session_router
 
 app = FastAPI()
 
@@ -18,4 +19,4 @@ register_exception_handlers(app)
 
 
 app.include_router(router=auth_router, prefix="/api/v1")
-
+app.include_router(router=session_router, prefix="/api/v1")
