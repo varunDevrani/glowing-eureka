@@ -13,6 +13,7 @@ ALGORITHM = "HS256"
 
 class AccessTokenPayload(BaseModel):
 	sub: UUID
+	sid: UUID
 	role: UserRole
 	iat: int
 	exp: int
@@ -21,6 +22,7 @@ class AccessTokenPayload(BaseModel):
 
 def create_access_token(
 	user_id: UUID,
+	session_id: UUID,
 	role: UserRole = UserRole.USER
 ) -> str:
 	current_time = datetime.now(timezone.utc)
@@ -28,6 +30,7 @@ def create_access_token(
 	
 	payload = AccessTokenPayload(
 		sub=user_id,
+		sid=session_id,
 		role=role,
 		iat=int(current_time.timestamp()),
 		exp=int(expire_time.timestamp())
