@@ -29,6 +29,9 @@ def create_auth_tokens(
 ) -> tuple[str, str, RefreshToken]:
 	access_token = create_access_token(user_id)
 	raw_refresh_token = create_opaque_token()
+	
+	
+	print(user_agent)
 		
 	refresh_token = RefreshToken(
 		family_id=family_id,
