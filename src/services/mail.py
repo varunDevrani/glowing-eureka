@@ -40,9 +40,6 @@ def send_verification_mail(
 	</body>
 	</html>
 	"""	
-	print(to_mail)
-	print(verification_link)
-	print(html_body)
 	_send_mail(to_mail, "Verify your email address.", html_body)
 
 
