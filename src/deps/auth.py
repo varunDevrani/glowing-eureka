@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from src.core.enums import UserStatus
 from src.deps.database import get_db
 from src.errors.app_exception import AccountDeactivatedException, AuthenticationException
+from src.models.token_family import TokenFamily
 from src.models.user import User
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -27,6 +28,17 @@ def get_current_user(
 	
 	
 	payload = decode_access_token(credentials.credentials)
+	
+	token_family = db.scalar(select(TokenFamily).where(TokenFamily.uid == payload.sid))
+	if token_family is None:
+		raise AuthenticationException(
+			message="Invalid token family provided."
+		)
+
+	if token_family.revoked_at is not None:
+		raise AuthenticationException(
+			message="Session ended. Please login again."
+		)
 	
 	user = db.scalar(select(User).where(User.uid == payload.sub))
 	if user is None:

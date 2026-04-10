@@ -23,7 +23,6 @@ from src.errors.app_exception import (
     AuthorizationException,
     BadRequestException,
     ConflictException,
-    NotFoundException,
 )
 from src.models.refresh_token import RefreshToken
 from src.models.user import User

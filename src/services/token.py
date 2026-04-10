@@ -27,7 +27,7 @@ def create_auth_tokens(
 	user_agent: Union[str, None] = None,
 	ip_addr: Union[str, None] = None
 ) -> tuple[str, str, RefreshToken]:
-	access_token = create_access_token(user_id)
+	access_token = create_access_token(user_id, family_id)
 	raw_refresh_token = create_opaque_token()
 	
 			
