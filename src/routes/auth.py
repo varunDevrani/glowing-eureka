@@ -221,19 +221,12 @@ def logout(
 	db: Session = Depends(get_db)
 ) -> SuccessResponse[None]:
 	refresh_token = db.scalar(select(RefreshToken).where(RefreshToken.token_hash == token_services.hash_token(payload.refresh_token)))
-	if refresh_token is None:
-		raise AuthenticationException(
-			message="Invalid refresh token provided."
-		)
 	
-	token_family = db.scalar(select(TokenFamily).where(TokenFamily.uid == refresh_token.family_id))
-	if token_family is None:
-		raise AuthenticationException(
-			message="Invalid token family provided."
-		)
-	
-	token_family.revoked_at = datetime.now(timezone.utc)
-
+	if refresh_token is not None:
+		token_family = db.scalar(select(TokenFamily).where(TokenFamily.uid == refresh_token.family_id))
+		if token_family is not None and token_family.revoked_at is None:
+			token_family.revoked_at = datetime.now(timezone.utc)
+		
 	return SuccessResponse[None](
 		message="User logged out successfully."
 	)
