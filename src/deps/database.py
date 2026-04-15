@@ -2,6 +2,7 @@
 
 
 from src.database.connect import sessionLocal
+from sqlalchemy.exc import SQLAlchemyError
 
 
 def get_db():
@@ -9,7 +10,7 @@ def get_db():
 	try:
 		yield db
 		db.commit()
-	except Exception:
+	except SQLAlchemyError:
 		db.rollback()
 		raise
 	finally:

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, BackgroundTasks
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -59,6 +59,7 @@ router = APIRouter(
 def signup(
 	payload: SignupRequest,
 	request: Request,
+	background_tasks: BackgroundTasks,
 	db: Session = Depends(get_db)
 ) -> SuccessResponse[UserResponse]:
 	user = User(
@@ -82,7 +83,8 @@ def signup(
 	
 	db.add(mail_verification_token)
 	
-	mail_services.send_verification_mail(user.email, f"{settings.FRONTEND_URL}/mail-verification?token={raw_token}")
+	# mail_services.send_verification_mail(user.email, f"{settings.FRONTEND_URL}/mail-verification?token={raw_token}")
+	background_tasks.add_task(mail_services.send_verification_mail, user.email, f"{settings.FRONTEND_URL}/mail-verification?token={raw_token}")
 
 	return SuccessResponse[UserResponse](
 		message="User created successfully. Please verify your email before logging in.",
@@ -181,9 +183,7 @@ def generate_access_token(
 
 	user = db.scalar(select(User).where(User.uid == token_family.user_id))
 	if user is None:
-		raise AppException(
-		    message="Something went wrong. Please try again later."
-		)
+		raise AppException()
 
 	if user.status == UserStatus.DEACTIVATED:
 		refresh_token.used_at = datetime.now(timezone.utc)
@@ -333,9 +333,7 @@ def mail_verification(
 	
 	user = db.scalar(select(User).where(User.uid == mail_verification_token.user_id))
 	if user is None:
-		raise AppException(
-		    message="Something went wrong. Please try again later."
-		)
+		raise AppException()
 	
 	user.verified_at = datetime.now(timezone.utc)
 	
@@ -353,6 +351,7 @@ def mail_verification(
 def resend_verification(
 	payload: ResendVerificationMailRequest,
 	request: Request,
+	background_tasks: BackgroundTasks,
 	db: Session = Depends(get_db)
 ) -> SuccessResponse[None]:
 	user = db.scalar(select(User).where(User.email == payload.email))
@@ -369,8 +368,10 @@ def resend_verification(
 	
 	db.add(mail_verification_token)
 	
-	mail_services.send_verification_mail(payload.email, f"{settings.FRONTEND_URL}/mail-verification?token={raw_token}")
+	# mail_services.send_verification_mail(payload.email, f"{settings.FRONTEND_URL}/mail-verification?token={raw_token}")
+	background_tasks.add_task(mail_services.send_verification_mail, payload.email, f"{settings.FRONTEND_URL}/mail-verification?token={raw_token}")
 	
+
 	return SuccessResponse[None](
 		message="If an account with this email exists, a verification email has been sent."
 	)
@@ -384,6 +385,7 @@ def resend_verification(
 def forgot_password(
 	payload: ForgotPasswordRequest,
 	request: Request,
+	background_tasks: BackgroundTasks,
 	db: Session = Depends(get_db)
 ) -> SuccessResponse[None]:
 	user = db.scalar(select(User).where(User.email == payload.email))
@@ -400,8 +402,9 @@ def forgot_password(
 	
 	db.add(password_reset_token)
 	
-	mail_services.send_password_reset_mail(payload.email, f"{settings.FRONTEND_URL}/reset-password?token={raw_token}")
-					
+	# mail_services.send_password_reset_mail(payload.email, f"{settings.FRONTEND_URL}/reset-password?token={raw_token}")
+	background_tasks.add_task(mail_services.send_password_reset_mail, payload.email, f"{settings.FRONTEND_URL}/reset-password?token={raw_token}")
+
 	return SuccessResponse[None](
 		message="If an account with this email exists, a reset password email has been sent."
 	)
@@ -430,9 +433,7 @@ def reset_password(
 	
 	user = db.scalar(select(User).where(User.uid == password_reset_token.user_id))
 	if user is None:
-		raise AppException(
-		    message="Something went wrong. Please try again later."
-		)
+		raise AppException()
 	
 	user.password_hash = hash_password(payload.password)
 	

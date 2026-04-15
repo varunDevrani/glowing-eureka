@@ -8,7 +8,7 @@ from src.core.config import settings
 from src.errors.app_exception import AuthenticationException
 
 
-ALGORITHM = "HS256"
+
 
 
 class AccessTokenPayload(BaseModel):
@@ -36,14 +36,14 @@ def create_access_token(
 		exp=int(expire_time.timestamp())
 	)
 	
-	return jwt.encode(payload.model_dump(mode="json"), settings.JWT_SECRET_KEY.get_secret_value(), ALGORITHM)
+	return jwt.encode(payload.model_dump(mode="json"), settings.JWT_SECRET_KEY.get_secret_value(), settings.JWT_ALGORITHM)
 
 
 def decode_access_token(
 	token: str
 ) -> AccessTokenPayload:
 	try:
-		raw_payload: dict = jwt.decode(token, settings.JWT_SECRET_KEY.get_secret_value(), [ALGORITHM])
+		raw_payload: dict = jwt.decode(token, settings.JWT_SECRET_KEY.get_secret_value(), [settings.JWT_ALGORITHM])
 		return AccessTokenPayload(**raw_payload)
 	except jwt.ExpiredSignatureError:
 		raise AuthenticationException(

@@ -10,7 +10,7 @@ class AppException(Exception):
 		self,
 		status_code: HTTPStatus = HTTPStatus.INTERNAL_SERVER_ERROR,
 		error_code: ErrorCode = ErrorCode.INTERNAL_SERVER_ERROR,
-		message: str = "Request execution failed.",
+		message: str = "Something went wrong. Please try again later.",
 		extra: Union[dict, None] = None
 	) -> None:
 		self.status_code = status_code

@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.errors.app_exception import AppException
 from src.errors.codes import ErrorCode
@@ -46,10 +47,10 @@ def register_exception_handlers(app: FastAPI):
 		)
 	
 	
-	@app.exception_handler(Exception)
-	def all_exception_handler(
+	@app.exception_handler(SQLAlchemyError)
+	def sql_exception_handler(
 		request: Request,
-		exc: Exception
+		exc: SQLAlchemyError
 	) -> JSONResponse:
 		#############################
 		# TODO: Remove this
